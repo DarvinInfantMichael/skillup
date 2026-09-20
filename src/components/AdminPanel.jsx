@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, Edit2, Loader2, ShieldAlert, X } from 'lucide-react';
+import { Users, Plus, Trash2, Edit2, Loader2, ShieldAlert, X, PieChart as PieChartIcon, GraduationCap, UserCog } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { getAllUsers, createUser, deleteUser, updateUser } from '../apis/adminApi';
 
 export default function AdminPanel({ currentUser }) {
@@ -99,7 +101,12 @@ export default function AdminPanel({ currentUser }) {
   }
 
   return (
-    <div className="md:col-span-3 bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="md:col-span-3 bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/5 transition-shadow duration-500"
+    >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -110,12 +117,98 @@ export default function AdminPanel({ currentUser }) {
         </div>
         <button 
           onClick={openCreateModal}
-          className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/25"
         >
           <Plus size={16} />
           Create User
         </button>
       </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="p-4 bg-neutral-950/50 border border-blue-500/20 rounded-2xl flex items-center gap-4 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
+                <GraduationCap size={24} />
+            </div>
+            <div>
+                <p className="text-neutral-400 text-sm font-medium">Total Students</p>
+                <p className="text-2xl font-bold text-white">{users.filter(u => u.role === 'student').length}</p>
+            </div>
+        </div>
+        <div className="p-4 bg-neutral-950/50 border border-purple-500/20 rounded-2xl flex items-center gap-4 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors" />
+            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400">
+                <UserCog size={24} />
+            </div>
+            <div>
+                <p className="text-neutral-400 text-sm font-medium">Total Staff</p>
+                <p className="text-2xl font-bold text-white">{users.filter(u => u.role === 'staff').length}</p>
+            </div>
+        </div>
+      </div>
+
+      {users.length > 0 && (
+          <div className="mb-8 p-6 bg-neutral-950/50 rounded-2xl border border-neutral-800/50 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div>
+                <h3 className="text-lg font-medium text-neutral-200 flex items-center gap-2 mb-2">
+                    <PieChartIcon className="text-indigo-400" size={18} />
+                    Role Distribution
+                </h3>
+                <p className="text-sm text-neutral-500 mb-4">A visual breakdown of user roles across the platform.</p>
+                <div className="space-y-2">
+                    {[
+                        { name: 'Super Admin', count: users.filter(u => u.role === 'admin').length, color: '#ec4899' },
+                        { name: 'Staff', count: users.filter(u => u.role === 'staff').length, color: '#a855f7' },
+                        { name: 'Student', count: users.filter(u => u.role === 'student').length, color: '#3b82f6' },
+                        { name: 'Standard User', count: users.filter(u => u.role === 'user').length, color: '#6b7280' },
+                    ].filter(r => r.count > 0).map(role => (
+                        <div key={role.name} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: role.color }} />
+                                <span className="text-neutral-400">{role.name}</span>
+                            </div>
+                            <span className="font-semibold text-neutral-200">{role.count}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={[
+                                { name: 'Admin', value: users.filter(u => u.role === 'admin').length, color: '#ec4899' },
+                                { name: 'Staff', value: users.filter(u => u.role === 'staff').length, color: '#a855f7' },
+                                { name: 'Student', value: users.filter(u => u.role === 'student').length, color: '#3b82f6' },
+                                { name: 'User', value: users.filter(u => u.role === 'user').length, color: '#6b7280' },
+                            ].filter(r => r.value > 0)}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                            stroke="none"
+                        >
+                            { [
+                                { name: 'Admin', value: users.filter(u => u.role === 'admin').length, color: '#ec4899' },
+                                { name: 'Staff', value: users.filter(u => u.role === 'staff').length, color: '#a855f7' },
+                                { name: 'Student', value: users.filter(u => u.role === 'student').length, color: '#3b82f6' },
+                                { name: 'User', value: users.filter(u => u.role === 'user').length, color: '#6b7280' },
+                            ].filter(r => r.value > 0).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Pie>
+                        <Tooltip 
+                            contentStyle={{ backgroundColor: '#171717', borderColor: '#262626', borderRadius: '12px' }}
+                            itemStyle={{ color: '#e5e5e5' }}
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+          </div>
+      )}
 
       {error && !isModalOpen && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
@@ -135,9 +228,17 @@ export default function AdminPanel({ currentUser }) {
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-neutral-800/50">
-            {users.map((user) => (
-              <tr key={user._id} className="hover:bg-neutral-800/30 transition-colors">
-                <td className="py-4 px-4 text-neutral-200 font-medium">{user.name}</td>
+            <AnimatePresence>
+              {users.map((user, idx) => (
+                <motion.tr 
+                  key={user._id} 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="hover:bg-neutral-800/50 transition-colors duration-200 group"
+                >
+                  <td className="py-4 px-4 text-neutral-200 font-medium group-hover:text-white transition-colors">{user.name}</td>
                 <td className="py-4 px-4 text-neutral-400">{user.email}</td>
                 <td className="py-4 px-4">
                   <span className={`inline-flex px-2 py-1 rounded-md text-xs font-medium uppercase tracking-wider ${
@@ -150,10 +251,10 @@ export default function AdminPanel({ currentUser }) {
                   </span>
                 </td>
                 <td className="py-4 px-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={() => openEditModal(user)}
-                      className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
+                      className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 active:scale-90 rounded-lg transition-all"
                       title="Edit User"
                     >
                       <Edit2 size={16} />
@@ -161,7 +262,7 @@ export default function AdminPanel({ currentUser }) {
                     {user._id !== currentUser._id && (
                       <button 
                         onClick={() => handleDelete(user._id)}
-                        className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-500/20 active:scale-90 rounded-lg transition-all"
                         title="Delete User"
                       >
                         <Trash2 size={16} />
@@ -169,8 +270,9 @@ export default function AdminPanel({ currentUser }) {
                     )}
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
+            </AnimatePresence>
           </tbody>
         </table>
         {users.length === 0 && (
@@ -181,10 +283,16 @@ export default function AdminPanel({ currentUser }) {
       </div>
 
       {/* Create/Edit Modal */}
+      <AnimatePresence>
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="flex justify-between items-center p-5 border-b border-neutral-800">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl"
+          >
+            <div className="flex justify-between items-center p-5 border-b border-neutral-800 bg-neutral-900/50">
               <h3 className="text-lg font-medium text-white">
                 {modalMode === 'create' ? 'Create New User' : 'Edit User'}
               </h3>
@@ -253,22 +361,23 @@ export default function AdminPanel({ currentUser }) {
                 <button 
                   type="button" 
                   onClick={closeModal}
-                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white py-2.5 rounded-xl font-medium transition-colors"
+                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-white py-2.5 rounded-xl font-medium transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  className="flex-1 bg-indigo-500 hover:bg-indigo-400 active:scale-95 hover:shadow-lg hover:shadow-indigo-500/25 text-white py-2.5 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                 >
                   {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : 'Save User'}
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 }
